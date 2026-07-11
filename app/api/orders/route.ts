@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
     const orderNumber = `ORD-${Date.now()}`;
 
     const orderRef = await db.collection("orders").add({
-      orderNumber, 
+      orderNumber,
       userId: body.userId,
       items: body.items,
       total: body.total,
@@ -38,6 +38,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       orderId: orderRef.id,
+      orderNumber,
       message: "Order created successfully",
     });
   } catch (error) {
