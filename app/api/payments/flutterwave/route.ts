@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        tx_ref: body.orderId,
+       tx_ref: orderData.orderNumber,
         amount: orderData.total,
         currency: "NGN",
         redirect_url: "http://localhost:3000/payment-success",
