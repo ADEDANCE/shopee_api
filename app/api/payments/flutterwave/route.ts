@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
        tx_ref: orderData.orderNumber,
         amount: orderData.total,
         currency: "NGN",
-        redirect_url: "http://localhost:3000/payment-success",
+        redirect_url: "https://shopee-api-three.vercel.app/payment-success",
         customer: {
           email: body.email,
           name: body.name,
