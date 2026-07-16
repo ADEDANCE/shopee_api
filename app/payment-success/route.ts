@@ -3,8 +3,10 @@ import { db } from "@/firebase/admin";
 
 
 export async function GET(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
 
+  // Reading the URL
+  const { searchParams } = new URL(request.url);
+// getting transaction_id
   const transactionId = searchParams.get("transaction_id");
 
   const txRef = searchParams.get("tx_ref");
@@ -26,6 +28,7 @@ export async function GET(request: NextRequest) {
     });
   }
 
+  // verify with Flutterwave
   const response = await fetch(
     `https://api.flutterwave.com/v3/transactions/${transactionId}/verify`,
     {
@@ -37,6 +40,7 @@ export async function GET(request: NextRequest) {
 
   const data = await response.json();
 
+  // Check payment
   if (data.status !== "success" || data.data.status !== "successful") {
     return NextResponse.json({
       success: false,
@@ -45,14 +49,14 @@ export async function GET(request: NextRequest) {
 
 
   const verifiedTxRef = data.data.tx_ref;
+
+  // Searching Firestore
 const snapshot = await db
   .collection("orders")
   .where("orderNumber", "==", verifiedTxRef)
   .get();
 
-  
-
-
+  // Checking if nothing was found
   if (snapshot.empty) {
   return NextResponse.json(
     {
@@ -65,8 +69,14 @@ const snapshot = await db
 
 
 const order = snapshot.docs[0];
-  
 
+// Get the user ID from the order
+const orderData = order.data();
+
+const userId = orderData.userId;
+
+  
+// Updating Firestore
   await order.ref.update({
 
     status:"paid",
@@ -79,6 +89,24 @@ const order = snapshot.docs[0];
 
 });
 
+// get the cart subcollection
+const cartSnapshot = await db
+  .collection("users")
+  .doc(userId)
+  .collection("cart")
+  .get();
+
+  // Delete every cart item
+  const batch = db.batch();
+
+for (const cartDoc of cartSnapshot.docs) {
+  batch.delete(cartDoc.ref);
+}
+
+await batch.commit();
+
+
+// Redirect
   return NextResponse.redirect(
     new URL("/success", request.url)
 );
